@@ -51,15 +51,13 @@ const projectSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Auto-generate portalToken before saving a new document
-projectSchema.pre('save', function (next) {
+// Auto-generate portalToken before validation
+projectSchema.pre('validate', function () {
   if (this.isNew && !this.portalToken) {
     this.portalToken = crypto.randomBytes(24).toString('hex');
   }
-  next();
 });
 
 projectSchema.index({ freelancerId: 1 });
-projectSchema.index({ portalToken: 1 }, { unique: true });
 
 module.exports = mongoose.model('Project', projectSchema);

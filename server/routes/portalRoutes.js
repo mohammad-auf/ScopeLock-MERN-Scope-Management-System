@@ -21,7 +21,7 @@ const router = express.Router();
 const submitRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 20,
-  keyGenerator: (req) => req.params.token || req.ip,
+  keyGenerator: (req) => req.params.token || 'anonymous',
   message: {
     error: {
       code: 'VALIDATION_ERROR',
