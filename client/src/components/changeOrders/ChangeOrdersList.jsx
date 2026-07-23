@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { changeOrdersAPI } from '../../services/api';
 import Loader from '../shared/Loader';
 
-const ChangeOrdersList = ({ projectId, project }) => {
+const ChangeOrdersList = ({ projectId, project, refreshKey }) => {
   const navigate = useNavigate();
   const [changeOrders, setChangeOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ const ChangeOrdersList = ({ projectId, project }) => {
 
   useEffect(() => {
     fetchChangeOrders();
-  }, [fetchChangeOrders]);
+  }, [fetchChangeOrders, refreshKey]);
 
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');

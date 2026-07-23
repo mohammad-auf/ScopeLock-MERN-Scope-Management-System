@@ -23,6 +23,7 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('scope');
+  const [coRefreshKey, setCoRefreshKey] = useState(0);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -167,12 +168,15 @@ const ProjectDetail = () => {
           <RequestsList 
             projectId={id} 
             project={project} 
-            onGenerateChangeOrder={() => setActiveTab('change-orders')} 
+            onGenerateChangeOrder={() => {
+              setActiveTab('change-orders');
+              setCoRefreshKey(prev => prev + 1);
+            }} 
           />
         </div>
 
         <div className="project-tab-panel" role="tabpanel" id="panel-change-orders" aria-labelledby="tab-change-orders" hidden={activeTab !== 'change-orders'}>
-          <ChangeOrdersList projectId={id} project={project} />
+          <ChangeOrdersList projectId={id} project={project} refreshKey={coRefreshKey} />
         </div>
 
         <div className="project-tab-panel" role="tabpanel" id="panel-timeline" aria-labelledby="tab-timeline" hidden={activeTab !== 'timeline'}>

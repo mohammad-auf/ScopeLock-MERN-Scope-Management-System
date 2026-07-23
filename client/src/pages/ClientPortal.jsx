@@ -31,6 +31,7 @@ const ClientPortal = () => {
   // Change orders + timeline (lazy-loaded per tab)
   const [changeOrders, setChangeOrders] = useState([]);
   const [coLoading, setCoLoading] = useState(false);
+  const [coLoaded, setCoLoaded] = useState(false);
   const [coError, setCoError] = useState('');
 
   const [timeline, setTimeline] = useState([]);
@@ -69,6 +70,7 @@ const ClientPortal = () => {
     try {
       const { data } = await portalAPI.getChangeOrders(token);
       setChangeOrders(data.changeOrders || []);
+      setCoLoaded(true);
     } catch (err) {
       setCoError('Failed to load change orders. Please try again.');
     } finally {
@@ -93,7 +95,7 @@ const ClientPortal = () => {
 
   // Load tab data when switching
   useEffect(() => {
-    if (activeTab === 'change-orders' && changeOrders.length === 0 && !coLoading) {
+    if (activeTab === 'change-orders' && !coLoaded && !coLoading) {
       fetchChangeOrders();
     }
     if (activeTab === 'timeline' && timeline.length === 0 && !tlLoading) {
@@ -114,10 +116,12 @@ const ClientPortal = () => {
     // Refresh project totals after approval
     const { data } = await portalAPI.getProject(token);
     setProject(data.project);
+    fetchChangeOrders();
   };
 
   const handleDecline = async (id) => {
     await portalAPI.declineChangeOrder(token, id);
+    fetchChangeOrders();
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────

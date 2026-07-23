@@ -3,7 +3,7 @@ const ScopeItem = require('../models/ScopeItem');
 const ClientRequest = require('../models/ClientRequest');
 const ChangeOrder = require('../models/ChangeOrder');
 const Notification = require('../models/Notification');
-const { classify } = require('../../client/src/utils/scopeMatcher');
+const { classify } = require('../utils/scopeMatcher');
 
 /** Structured app error helper */
 const appError = (status, appCode, message) => {
