@@ -1,10 +1,16 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt'); // Fixed: was bcryptjs, only bcrypt is installed
 
 const User = require('../models/User');
 const Project = require('../models/Project');
 const ScopeItem = require('../models/ScopeItem');
+
+/**
+ * Demo seed data constants — used to identify and safely clean up seed data.
+ * We NEVER wipe entire collections; we only delete known demo records.
+ */
+const DEMO_EMAIL = 'freelancer@scopelock.com';
 
 const seedData = async () => {
   try {
@@ -16,22 +22,39 @@ const seedData = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Clear existing data
-    await User.deleteMany();
-    await Project.deleteMany();
-    await ScopeItem.deleteMany();
-    console.log('Cleared existing data');
+    // ─── Safe cleanup: only delete known demo records ──────────────────────
+    // Find the existing demo user (if any) to also clean up their projects/items
+    const existingDemo = await User.findOne({ email: DEMO_EMAIL });
+    if (existingDemo) {
+      const existingProjects = await Project.find({ freelancerId: existingDemo._id });
+      const existingProjectIds = existingProjects.map((p) => p._id);
 
-    // 1. Create a Freelancer User
+      // Delete scope items belonging to demo projects
+      if (existingProjectIds.length > 0) {
+        await ScopeItem.deleteMany({ projectId: { $in: existingProjectIds } });
+        console.log(`Removed ${existingProjectIds.length} demo project(s) and their scope items`);
+      }
+
+      // Delete demo projects
+      await Project.deleteMany({ freelancerId: existingDemo._id });
+
+      // Delete demo user
+      await User.deleteOne({ email: DEMO_EMAIL });
+      console.log(`Removed existing demo user: ${DEMO_EMAIL}`);
+    } else {
+      console.log('No existing demo data found — running fresh seed');
+    }
+
+    // ─── 1. Create a Demo Freelancer User ─────────────────────────────────
     const passwordHash = await bcrypt.hash('password123', 10);
     const freelancer = await User.create({
       name: 'Demo Freelancer',
-      email: 'freelancer@scopelock.com',
+      email: DEMO_EMAIL,
       passwordHash,
     });
     console.log(`Created Freelancer: ${freelancer.email} (Password: password123)`);
 
-    // 2. Create a Project
+    // ─── 2. Create a Demo Project ──────────────────────────────────────────
     const project = await Project.create({
       freelancerId: freelancer._id,
       title: 'E-Commerce Website Redesign',
@@ -41,7 +64,7 @@ const seedData = async () => {
     });
     console.log(`Created Project: ${project.title}`);
 
-    // 3. Create Scope Items
+    // ─── 3. Create Demo Scope Items ────────────────────────────────────────
     const scopeItems = await ScopeItem.insertMany([
       {
         projectId: project._id,
@@ -75,6 +98,7 @@ const seedData = async () => {
     console.log(`Created ${scopeItems.length} Scope Items`);
 
     console.log('\n--- Seed Complete ---');
+    console.log(`Login:            ${DEMO_EMAIL} / password123`);
     console.log(`Client Portal URL: http://localhost:3000/portal/${project.portalToken}`);
     process.exit(0);
   } catch (error) {

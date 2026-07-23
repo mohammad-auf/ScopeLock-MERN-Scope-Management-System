@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { changeOrdersAPI } from '../../services/api';
 import Loader from '../shared/Loader';
 
 const ChangeOrdersList = ({ projectId, project }) => {
+  const navigate = useNavigate();
   const [changeOrders, setChangeOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,70 +26,12 @@ const ChangeOrdersList = ({ projectId, project }) => {
     fetchChangeOrders();
   }, [fetchChangeOrders]);
 
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ description: '', estimatedHours: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
 
+  // Navigate to the dedicated review/edit page for a draft CO
   const handleEditClick = (co) => {
-    setEditingId(co._id);
-    setEditData({ description: co.description, estimatedHours: co.estimatedHours });
-    setActionError('');
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setActionError('');
-  };
-
-  const handleSaveEdit = async (id) => {
-    try {
-      setActionLoading(true);
-      setActionError('');
-      await changeOrdersAPI.update(id, {
-        description: editData.description,
-        estimatedHours: Number(editData.estimatedHours),
-      });
-      setEditingId(null);
-      fetchChangeOrders();
-    } catch (err) {
-      setActionError(err.response?.data?.error?.message || 'Failed to update change order');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleSend = async (id) => {
-    if (!window.confirm('Send this change order to the client for approval? Once sent, it cannot be edited.')) return;
-    try {
-      setActionLoading(true);
-      setActionError('');
-      await changeOrdersAPI.send(id);
-      fetchChangeOrders();
-    } catch (err) {
-      setActionError(err.response?.data?.error?.message || 'Failed to send change order');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this draft change order?')) return;
-    try {
-      setActionLoading(true);
-      setActionError('');
-      // In api.js, remove is not defined in changeOrdersAPI, let's fix api.js or use axios directly.
-      // Wait, api.js might not have remove. I need to add it, but for now I'll use changeOrdersAPI if it exists.
-      // Ah, I need to check if changeOrdersAPI has remove. Let's assume I need to add it to api.js.
-      // Wait, I can use an inline axios call or just add it to api.js later. I will add it to api.js.
-      // Actually, I'll update api.js in a separate step.
-      await changeOrdersAPI.remove(id);
-      fetchChangeOrders();
-    } catch (err) {
-      setActionError(err.response?.data?.error?.message || 'Failed to delete change order');
-    } finally {
-      setActionLoading(false);
-    }
+    navigate(`/projects/${projectId}/change-orders/${co._id}/review`);
   };
 
   if (loading) return <Loader />;
@@ -127,78 +71,63 @@ const ChangeOrdersList = ({ projectId, project }) => {
                 </span>
               </div>
 
-              {editingId === co._id ? (
-                <div style={{ margin: '1rem 0' }}>
-                  <textarea
-                    className="form-input"
-                    value={editData.description}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    rows="3"
-                    style={{ marginBottom: '0.5rem' }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label>Hours:</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={editData.estimatedHours}
-                      onChange={(e) => setEditData({ ...editData, estimatedHours: e.target.value })}
-                      style={{ width: '100px' }}
-                      step="0.1"
-                      min="0.1"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSaveEdit(co._id)} disabled={actionLoading}>
-                      Save
-                    </button>
-                    <button className="btn btn-ghost btn-sm" onClick={handleCancelEdit} disabled={actionLoading}>
-                      Cancel
-                    </button>
-                  </div>
+              <p style={{ margin: '1rem 0' }}>{co.description}</p>
+              <p className="text-muted" style={{ fontSize: '0.9rem' }}>
+                Estimated Hours: {co.estimatedHours}h
+              </p>
+
+              {co.status === 'draft' && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => handleEditClick(co)}
+                    disabled={actionLoading}
+                  >
+                    Review / Edit
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--danger-color)' }}
+                    onClick={async () => {
+                      if (!window.confirm('Are you sure you want to delete this draft change order?')) return;
+                      try {
+                        setActionLoading(true);
+                        setActionError('');
+                        await changeOrdersAPI.remove(co._id);
+                        fetchChangeOrders();
+                      } catch (err) {
+                        setActionError(err.response?.data?.error?.message || 'Failed to delete change order');
+                      } finally {
+                        setActionLoading(false);
+                      }
+                    }}
+                    disabled={actionLoading}
+                  >
+                    Delete
+                  </button>
                 </div>
-              ) : (
-                <>
-                  <p style={{ margin: '1rem 0' }}>{co.description}</p>
-                  <p className="text-muted" style={{ fontSize: '0.9rem' }}>
-                    Estimated Hours: {co.estimatedHours}h
-                  </p>
-                  
-                  {co.status === 'draft' && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
-                      <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => handleSend(co._id)} disabled={actionLoading}>
-                        Send to Client
-                      </button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => handleEditClick(co)} disabled={actionLoading}>
-                        Edit
-                      </button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger-color)' }} onClick={() => handleDelete(co._id)} disabled={actionLoading}>
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                  {co.status === 'declined' && (
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                       <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
-                         This change order was declined by the client.
-                       </p>
-                    </div>
-                  )}
-                  {co.status === 'approved' && (
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                       <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
-                         This change order was approved on {new Date(co.resolvedAt || co.updatedAt).toLocaleDateString()}.
-                       </p>
-                    </div>
-                  )}
-                  {co.status === 'sent' && (
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                       <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
-                         Waiting for client response...
-                       </p>
-                    </div>
-                  )}
-                </>
+              )}
+              {co.status === 'declined' && (
+                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                   <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
+                     This change order was declined by the client.
+                   </p>
+                </div>
+              )}
+              {co.status === 'approved' && (
+                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                   <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
+                     This change order was approved on {new Date(co.resolvedAt || co.updatedAt).toLocaleDateString()}.
+                   </p>
+                </div>
+              )}
+              {co.status === 'sent' && (
+                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                   <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
+                     Waiting for client response...
+                   </p>
+                </div>
               )}
             </div>
           ))}

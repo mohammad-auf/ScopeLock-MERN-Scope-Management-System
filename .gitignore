@@ -1,0 +1,38 @@
+# ─── Environment Files ───────────────────────────────────────────────────────
+# Never commit secrets to version control!
+.env
+*.env
+.env.local
+.env.*.local
+
+# Keep .env.example files so devs know what variables are needed
+!.env.example
+
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Production Builds ───────────────────────────────────────────────────────
+client/build/
+build/
+dist/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# ─── Testing ─────────────────────────────────────────────────────────────────
+coverage/
+
+# ─── OS / Editor ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ─── Atlas credentials file ──────────────────────────────────────────────────
+atlas-credentials*.env

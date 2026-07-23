@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProjectDetail from './pages/ProjectDetail';
+import ChangeOrderReview from './pages/ChangeOrderReview';
 import ClientPortal from './pages/ClientPortal';
 import Loader from './components/shared/Loader';
 
@@ -68,6 +69,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <ProjectDetail />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/projects/:id/change-orders/:coId/review"
+      element={
+        <ProtectedRoute>
+          <ChangeOrderReview />
         </ProtectedRoute>
       }
     />

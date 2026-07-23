@@ -67,6 +67,7 @@ export const requestsAPI = {
 // ─── Change Orders ───────────────────────────────────────────────────────────
 export const changeOrdersAPI = {
   getAll: (projectId) => api.get(`/projects/${projectId}/change-orders`),
+  getOne: (id) => api.get(`/change-orders/${id}`),
   update: (id, data) => api.put(`/change-orders/${id}`, data),
   send: (id) => api.put(`/change-orders/${id}/send`),
   remove: (id) => api.delete(`/change-orders/${id}`),
@@ -98,10 +99,11 @@ export const timelineAPI = {
 };
 
 // ─── Notifications ────────────────────────────────────────────────────────────
+// NOTE: Uses PUT (not PATCH) — server routes updated to match.
 export const notificationsAPI = {
   getAll: () => api.get('/notifications'),
-  markRead: (id) => api.patch(`/notifications/${id}/read`),
-  markAllRead: () => api.patch('/notifications/read-all'),
+  markRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
 };
 
 export default api;
